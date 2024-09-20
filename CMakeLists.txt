@@ -76,19 +76,10 @@ endif()
 add_definitions(
     -DQT_NO_CAST_FROM_ASCII
     -DQT_USE_QSTRINGBUILDER
-    -DQT_USE_FAST_OPERATOR_PLUS)
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    -DQT_USE_FAST_OPERATOR_PLUS
+)
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
     add_definitions(-DDEBUG -D_DEBUG)
-endif()
-
-if(MSVC)
-    target_compile_options(BugReproduction01 PRIVATE
-          $<$<COMPILE_LANGUAGE:CXX>:/FI "${CMAKE_CURRENT_SOURCE_DIR}/Common.h" >
-    )
-else()
-    target_compile_options(BugReproduction01 PRIVATE
-          $<$<COMPILE_LANGUAGE:CXX>:-include "${CMAKE_CURRENT_SOURCE_DIR}/Common.h" >
-    )
 endif()
 
 if(MSVC)

@@ -40,31 +40,30 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 void MainWindow::dropEvent(QDropEvent *event)
 {
     QMimeData const *mimeData = event->mimeData();
+    if (!mimeData->hasUrls())
+        return;
 
-    if (mimeData->hasUrls()) {
-        QList<QUrl> urlList = mimeData->urls();
-        QStringList pathList;
+    QList<QUrl> urlList = mimeData->urls();
+    QStringList pathList;
 
-        if (urlList.isEmpty()) {
-            qWarning() << u"hasUrls() indicated that file urls should exist, but urls() returned an empty list.";
+    textEdit->append(u"Drop event received. The mimeData object indicates urls are present. Number present: " + QString::number(urlList.size()));
+
+    if (urlList.isEmpty()) {
+        qWarning() << u"hasUrls() indicated that file urls should exist, but urls() returned an empty list.";
 #ifdef Q_OS_WINDOWS
-            pathList = getFilePathsViaWin32Idlist(mimeData);
-            if (pathList.isEmpty())
-                qWarning() << u"The backup approach failed to determine any file path.";
-            else
-                qWarning() << u"The backup approach found" << pathList.size() << u"file paths.";
+        textEdit->append(u"The file list will be retrieved via the backup method."_s);
+        pathList = getFilePathsViaWin32Idlist(mimeData);
+        if (pathList.isEmpty())
+            qCritical() << u"The backup approach failed to determine any file path.";
 #endif
-        } else {
-            for (auto const &i : urlList)
-                pathList.append(i.toLocalFile());
-        }
-
-        for (qsizetype i = 0; i < pathList.size(); ++i) {
-            qDebug() << u"File" << i << u":" << pathList[i];
-            textEdit->append(u"File " + QString::number(i) + u": " + pathList[i]);
-        }
-        textEdit->append({});
+    } else {
+        for (auto const &url : urlList)
+            pathList.append(url.toLocalFile());
     }
+
+    for (qsizetype i = 0; i < pathList.size(); ++i)
+        textEdit->append(u"File " + QString::number(i) + u": " + pathList[i]);
+    textEdit->append({});
 }
 
 //-----------------------------------------------------------------------------------
@@ -73,7 +72,7 @@ void MainWindow::dropEvent(QDropEvent *event)
 # include <ShlObj.h>
 # include <Shlwapi.h>
 # define GetPIDLFolder(pida)  (reinterpret_cast<LPCITEMIDLIST>((reinterpret_cast<BYTE const *>(pida)) + (pida)->aoffset[0]))
-# define GetPIDLItem(pida, i) (reinterpret_cast<LPCITEMIDLIST>((reinterpret_cast<BYTE const *>(pida)) + (pida)->aoffset[(i) + 1]))
+# define GetPIDLItem(pida, i) (reinterpret_cast<LPCITEMIDLIST>((reinterpret_cast<BYTE const *>(pida)) + (pida)->aoffset[(i) + 1U]))
 
 static void dumpComError(char16_t const *message, HRESULT res)
 {
@@ -109,7 +108,7 @@ ND static QStringList getFilePathsViaWin32Idlist(QMimeData const *mimeData)
         QString path = rootDir;
         path.append(reinterpret_cast<QChar *>(str), static_cast<qsizetype>(wcslen(str)));
         ::CoTaskMemFree(str);
-        ret.push_back(std::move(path));
+        ret.append(std::move(path));
     }
     return ret;
 }
