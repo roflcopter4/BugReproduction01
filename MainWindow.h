@@ -2,9 +2,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QEvent>
+#include <QDropEvent>
 #include <QMainWindow>
-#include <QObject>
 #include <QTextEdit>
 #include <QWidget>
 
