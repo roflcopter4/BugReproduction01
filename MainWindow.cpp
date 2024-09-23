@@ -1,12 +1,13 @@
 #include "MainWindow.h"
 #include "./ui_MainWindow.h"
+#include "util.h"
 
 #include <QDebug>
 #include <QMimeData>
 #include <QVBoxLayout>
 
 #ifdef Q_OS_WINDOWS
-ND static QStringList getFilePathsViaWin32Idlist(QMimeData const *mimeData);
+ND static QStringList getFilePathsViaWin32IdList(QMimeData const *mimeData);
 #endif
 
 MainWindow::MainWindow(QWidget *parent)
@@ -52,7 +53,7 @@ void MainWindow::dropEvent(QDropEvent *event)
         qWarning() << u"hasUrls() indicated that file urls should exist, but urls() returned an empty list.";
 #ifdef Q_OS_WINDOWS
         textEdit->append(u"The file list will be retrieved via the backup method."_s);
-        pathList = getFilePathsViaWin32Idlist(mimeData);
+        pathList = getFilePathsViaWin32IdList(mimeData);
         if (pathList.isEmpty())
             qCritical() << u"The backup approach failed to determine any file path.";
 #endif
@@ -76,12 +77,10 @@ void MainWindow::dropEvent(QDropEvent *event)
 
 static void dumpComError(char16_t const *message, HRESULT res)
 {
-    qDebug() << u"COM error in" << message << u':'
-             << QString::number(static_cast<unsigned>(res), 16) << u':'
-             << QString::fromStdString(std::error_code(res, std::system_category()).message());
+    qDebug() << u"COM error in" << message << u':' << util::GetErrorMessage(res);
 }
 
-ND static QStringList getFilePathsViaWin32Idlist(QMimeData const *mimeData)
+ND static QStringList getFilePathsViaWin32IdList(QMimeData const *mimeData)
 {
     auto shIdList = mimeData->data(uR"(application/x-qt-windows-mime;value="Shell IDList Array")"_s);
     auto idList   = reinterpret_cast<::CIDA const *>(shIdList.data());
